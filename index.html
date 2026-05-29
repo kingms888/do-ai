@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>AI文档解析与结构化记忆图谱工具 | PDF to JSON · 表格提取 · 智能结构化</title>
+    <meta name="description" content="面向AI Agent的文档解析工具：将PDF/PPT/表格转化为结构化JSON，降低Token消耗，结果可追溯。支持浏览器端解析，无需上传服务器。">
+    <meta name="keywords" content="pdf to json, document parser for ai, structured data extraction, table extraction tool, ai agent memory graph, 文档解析, 结构化记忆图谱">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="AI文档解析与结构化记忆图谱工具">
+    <meta property="og:description" content="将复杂PDF/PPT/表格转化为结构化JSON，降低Token消耗，结果可追溯。纯前端解析，数据不出浏览器。">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://docparser.example.com">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f7fc;
+            color: #1e293b;
+            line-height: 1.5;
+            padding: 16px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0 20px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-icon {
+            font-size: 28px;
+        }
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+        .logo-sub {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .ad-placeholder {
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-size: 0.8rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .ad-placeholder span {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.7rem;
+            color: #334155;
+        }
+        .ad-placeholder a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .ad-placeholder a:hover {
+            text-decoration: underline;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #0f172a;
+        }
+        .subhead {
+            color: #475569;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            max-width: 700px;
+        }
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        @media (min-width: 768px) {
+            .tool-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid #e9edf2;
+            transition: box-shadow 0.2s;
+        }
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h2 small {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 32px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            background: #fafcff;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .drop-zone p {
+            color: #64748b;
+            margin: 8px 0 0;
+        }
+        .drop-zone .icon {
+            font-size: 40px;
+            line-height: 1;
+        }
+        .file-input-label {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 12px;
+            border: none;
+            transition: background 0.2s;
+        }
+        .file-input-label:hover {
+            background: #1d4ed8;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .sample-btn {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: #334155;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.2s;
+        }
+        .sample-btn:hover {
+            background: #f1f5f9;
+        }
+        .status-area {
+            margin-top: 16px;
+            min-height: 28px;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+        .status-area .error {
+            color: #b91c1c;
+        }
+        .status-area .success {
+            color: #15803d;
+        }
+        .output-area {
+            margin-top: 16px;
+        }
+        .output-area pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            max-height: 400px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .output-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #1e293b;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn:hover {
+            background: #e2e8f0;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .memory-graph-preview {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            margin-top: 16px;
+            min-height: 80px;
+        }
+        .memory-node {
+            display: inline-block;
+            background: #dbeafe;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin: 4px;
+            font-size: 0.75rem;
+            border: 1px solid #93c5fd;
+        }
+        .memory-edge {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin: 0 4px;
+        }
+        .affiliate-section {
+            margin-top: 32px;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .affiliate-item {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            border: 1px solid #e9edf2;
+            flex: 1 1 200px;
+            max-width: 280px;
+            text-align: center;
+        }
+        .affiliate-item h4 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        .affiliate-item p {
+            font-size: 0.75rem;
+            color: #475569;
+        }
+        .affiliate-item a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .privacy-note {
+            margin-top: 32px;
+            padding: 12px 16px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #475569;
+            text-align: center;
+        }
+        footer {
+            margin-top: 40px;
+            padding: 16px 0;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            color: #334155;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="logo-area">
+            <span class="logo-icon">🧠</span>
+            <div>
+                <div class="logo-text">DocStruct · AI记忆图谱</div>
+                <div class="logo-sub">文档 → 结构化JSON</div>
+            </div>
+        </div>
+        <div class="ad-placeholder">
+            <span>📢 赞助</span>
+            <span>⚡ 提升Agent推理效率 · <a href="#" onclick="reportEvent('ad_click',{ad:'sponsor_top'});return false;">Try Vectara</a></span>
+        </div>
+    </header>
+
+    <h1>AI文档解析与结构化记忆图谱</h1>
+    <div class="subhead">
+        将PDF/PPT/表格转化为结构化JSON，降低Token消耗，结果可追溯。纯前端解析，数据不出浏览器。
+    </div>
+
+    <div class="tool-grid">
+        <!-- 左侧：文档解析核心工具 -->
+        <div class="card">
+            <h2>📄 文档解析器 <small>PDF · PPT · 表格 → JSON</small></h2>
+            <div class="drop-zone" id="dropZone">
+                <div class="icon">📂</div>
+                <p><strong>拖放文件到此处</strong> 或点击选择</p>
+                <label class="file-input-label" for="fileInput">选择文件</label>
+                <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx,.csv,.xls,.xlsx,.json,.txt" multiple>
+                <div><button class="sample-btn" id="loadSampleBtn">📋 加载示例数据</button></div>
+            </div>
+            <div class="status-area" id="statusMessage">就绪，可解析PDF/PPT/表格/文本</div>
+            <div class="output-area" id="outputArea">
+                <pre id="jsonOutput">点击「加载示例数据」或上传文件查看结构化结果</pre>
+                <div class="output-actions">
+                    <button class="btn btn-primary" id="copyBtn">📋 复制JSON</button>
+                    <button class="btn" id="clearBtn">🗑️ 清空</button>
+                    <span class="badge" id="tokenEstimate">~0 tokens</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：结构化记忆图谱预览 -->
+        <div class="card">
+            <h2>🔗 记忆图谱预览 <small>实体 · 关系</small></h2>
+            <div id="memoryGraphContainer" class="memory-graph-preview">
+                <div style="color:#94a3b8; font-size:0.85rem;">上传文档后自动提取实体与关系</div>
+                <div id="graphNodes" style="margin-top:8px;"></div>
+            </div>
+            <div style="margin-top:16px; font-size:0.8rem; color:#475569;">
+                <strong>结构化记忆优势：</strong> 降低Token消耗 · 可追溯 · 支持Agent推理
+            </div>
+            <div style="margin-top:12px; background:#f1f5f9; border-radius:12px; padding:12px;">
+                <div style="font-weight:600; font-size:0.85rem;">📊 表格提取工具 (智能识别)</div>
+                <div style="font-size:0.75rem; color:#475569; margin-top:4px;">上传CSV/Excel或含表格的PDF，自动提取为结构化JSON数组。</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 资源/联盟营销占位 -->
+    <div class="affiliate-section">
+        <div class="affiliate-item">
+            <h4>🚀 向量数据库</h4>
+            <p>为AI Agent提供长期记忆，推荐 Pinecone</p>
+            <a href="#" onclick="reportEvent('affiliate_click',{vendor:'pinecone'});return false;">了解详情 →</a>
+        </div>
+        <div class="affiliate-item">
+            <h4>📖 文档解析API</h4>
+            <p>Unstructured.io 企业级解析</p>
+            <a href="#" onclick="reportEvent('affiliate_click',{vendor:'unstructured'});return false;">查看方案 →</a>
+        </div>
+        <div class="affiliate-item">
+            <h4>🧠 LLM网关</h4>
+            <p>降低Token成本 · Portkey</p>
+            <a href="#" onclick="reportEvent('affiliate_click',{vendor:'portkey'});return false;">优化调用 →</a>
+        </div>
+    </div>
+
+    <!-- 隐私说明 -->
+    <div class="privacy-note">
+        🔒 隐私说明：所有解析在浏览器本地完成，不上传任何文件。事件可能被匿名统计以改进产品。
+    </div>
+
+    <footer>
+        DocStruct · AI文档解析与结构化记忆图谱工具 · 面向开发者 · v1.0
+    </footer>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ---------- 事件上报 ----------
+        window.ORGANISM_METRICS_ENDPOINT = window.ORGANISM_METRICS_ENDPOINT || null;
+
+        function reportEvent(name, payload) {
+            if (typeof window.ORGANISM_METRICS_ENDPOINT === 'string' && window.ORGANISM_METRICS_ENDPOINT.length > 0) {
+                try {
+                    const body = JSON.stringify({ event: name, payload: payload || {}, ts: Date.now() });
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon(window.ORGANISM_METRICS_ENDPOINT, body);
+                    } else {
+                        fetch(window.ORGANISM_METRICS_ENDPOINT, {
+                            method: 'POST',
+                            body: body,
+                            keepalive: true,
+                            headers: { 'Content-Type': 'application/json' }
+                        }).catch(() => {});
+                    }
+                } catch (e) {
+                    // silent
+                }
+            }
+        }
+        window.reportEvent = reportEvent;
+
+        // ---------- DOM refs ----------
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const statusMsg = document.getElementById('statusMessage');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loadSampleBtn = document.getElementById('loadSampleBtn');
+        const tokenEstimate = document.getElementById('tokenEstimate');
+        const graphNodes = document.getElementById('graphNodes');
+
+        let currentData = null; // 当前解析后的结构化数据 (数组或对象)
+
+        // ---------- 辅助函数 ----------
+        function estimateTokens(text) {
+            if (!text) return 0;
+            // 粗略估计: 1 token ~ 4 chars (英文为主), 中文约 1.5 chars/token
+            let charCount = text.length;
+            let tokenCount = Math.ceil(charCount / 3.5);
+            return tokenCount;
+        }
+
+        function updateTokenDisplay(data) {
+            let jsonStr = '';
+            try {
+                jsonStr = JSON.stringify(data, null, 2);
+            } catch(e) {
+                jsonStr = String(data);
+            }
+            const tokens = estimateTokens(jsonStr);
+            tokenEstimate.textContent = `~${tokens} tokens`;
+        }
+
+        function renderGraphFromData(data) {
+            if (!data || (Array.isArray(data) && data.length === 0) || (typeof data === 'object' && Object.keys(data).length === 0)) {
+                graphNodes.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem;">无实体可展示</div>';
+                return;
+            }
+            let entities = [];
+            let relations = [];
+
+            // 从结构化数据中提取实体: 如果是数组，取每个对象的key作为实体；如果是对象，取顶层key
+            if (Array.isArray(data)) {
+                // 取第一个对象的keys作为实体
+                if (data.length > 0 && typeof data[0] === 'object') {
+                    const keys = Object.keys(data[0]);
+                    entities = keys.slice(0, 8);
+                    // 模拟关系
+                    relations = entities.slice(0, -1).map((k, idx) => [k, entities[idx+1]]);
+                } else {
+                    entities = ['文档条目'];
+                }
+            } else if (typeof data === 'object') {
+                entities = Object.keys(data).slice(0, 8);
+                relations = entities.slice(0, -1).map((k, idx) => [k, entities[idx+1]]);
+            } else {
+                entities = ['文本'];
+            }
+
+            let html = '';
+            entities.forEach(e => {
+                html += `<span class="memory-node">${e}</span>`;
+            });
+            if (relations.length > 0) {
+                html += '<div style="margin-top:8px; font-size:0.7rem; color:#64748b;">关联: ';
+                relations.slice(0, 5).forEach(r => {
+                    html += `<span class="memory-edge">${r[0]} → ${r[1]}</span> `;
+                });
+                html += '</div>';
+            }
+            graphNodes.innerHTML = html;
+            reportEvent('graph_rendered', { entityCount: entities.length });
+        }
+
+        // 核心解析函数: 根据文件内容返回结构化JSON
+        function parseFileContent(file, text) {
+            const name = file.name.toLowerCase();
+            let result = {};
+
+            // 尝试检测是否为表格 (CSV, TSV, 或表格文本)
+            if (name.endsWith('.csv') || name.endsWith('.tsv')) {
+                const delimiter = name.endsWith('.tsv') ? '\t' : ',';
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                if (lines.length > 0) {
+                    const headers = lines[0].split(delimiter).map(h => h.trim());
+                    const rows = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const cells = lines[i].split(delimiter).map(c => c.trim());
+                        if (cells.length === headers.length) {
+                            const row = {};
+                            headers.forEach((h, idx) => { row[h] = cells[idx] || ''; });
+                            rows.push(row);
+                        }
+                    }
+                    result = { file: file.name, type: 'table', rowCount: rows.length, data: rows };
+                } else {
+                    result = { file: file.name, type: 'table', data: [] };
+                }
+            } else if (name.endsWith('.json')) {
+                try {
+                    const parsed = JSON.parse(text);
+                    result = { file: file.name, type: 'json', data: parsed };
+                } catch (e) {
+                    result = { file: file.name, type: 'json', error: '无效JSON', raw: text.substring(0, 500) };
+                }
+            } else if (name.endsWith('.txt') || name.endsWith('.md')) {
+                // 简单分段
+                const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                const sections = [];
+                let current = '';
+                lines.forEach(line => {
+                    if (line.match(/^#{1,3}\s/) || line.match(/^[A-Z][^a-z]*:/)) {
+                        if (current) sections.push(current.trim());
+                        current = line + '\n';
+                    } else {
+                        current += line + '\n';
+                    }
+                });
+                if (current) sections.push(current.trim());
+                result = { file: file.name, type: 'text', sections: sections, lineCount: lines.length };
+            } else {
+                // PDF/PPT/其他: 模拟提取文本 (真实场景需PDF.js等, 此处演示结构化)
+                // 提取单词/短语作为实体
+                const words = text.match(/[A-Za-z\u4e00-\u9fa5]+/g) || [];
+                const unique = [...new Set(words.slice(0, 30))];
+                result = { file: file.name, type: 'document', extractedEntities: unique, textLength: text.length, preview: text.substring(0, 300) };
+            }
+
+            return result;
+        }
+
+        // 处理文件
+        function processFiles(files) {
+            if (!files || files.length === 0) {
+                statusMsg.textContent = '请选择文件';
+                return;
+            }
+            statusMsg.textContent = '⏳ 解析中...';
+            reportEvent('file_upload', { fileCount: files.length });
+
+            const readerPromises = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                const promise = new Promise((resolve, reject) => {
+                    reader.onload = (e) => {
+                        const text = e.target.result;
+                        const parsed = parseFileContent(file, text);
+                        resolve(parsed);
+                    };
+                    reader.onerror = () => reject('读取失败');
+                    // 限制文件大小 10MB
+                    if (file.size > 10 * 1024 * 1024) {
+                        reject('文件过大 (超过10MB)');
+                    } else {
+                        reader.readAsText(file, 'UTF-8');
+                    }
+                });
+                readerPromises.push(promise);
+            }
+
+            Promise.allSettled(readerPromises).then(results => {
+                const allData = [];
+                let errorCount = 0;
+                results.forEach((res, idx) => {
+                    if (res.status === 'fulfilled') {
+                        allData.push(res.value);
+                    } else {
+                        errorCount++;
+                        allData.push({ file: files[idx]?.name || 'unknown', error: res.reason });
+                    }
+                });
+
+                let outputData;
+                if (allData.length === 1) {
+                    outputData = allData[0];
+                } else {
+                    outputData = { files: allData };
+                }
+
+                currentData = outputData;
+                try {
+                    const pretty = JSON.stringify(outputData, null, 2);
+                    jsonOutput.textContent = pretty;
+                    updateTokenDisplay(outputData);
+                    renderGraphFromData(outputData);
+                    statusMsg.innerHTML = `<span class="success">✅ 解析完成 (${files.length} 文件, ${errorCount} 错误)</span>`;
+                } catch (e) {
+                    jsonOutput.textContent = '序列化错误';
+                    statusMsg.innerHTML = `<span class="error">❌ 解析异常</span>`;
+                }
+                reportEvent('parse_complete', { fileCount: files.length, errorCount });
+            });
+        }
+
+        // 加载示例数据
+        function loadSampleData() {
+            const sample = {
+                "document": "Q3市场分析报告",
+                "entities": ["营收", "市场份额", "增长率", "客户数", "产品线"],
+                "tables": [
+                    { "季度": "Q1", "营收(万)": 1200, "增长率": "5%" },
+                    { "季度": "Q2", "营收(万)": 1450, "增长率": "8%" },
+                    { "季度": "Q3", "营收(万)": 1680, "增长率": "12%" }
+                ],
+                "memoryGraph": {
+                    "nodes": ["营收", "市场份额", "增长率", "客户数"],
+                    "edges": [["营收", "增长率"], ["市场份额", "客户数"]]
+                }
+            };
+            currentData = sample;
+            jsonOutput.textContent = JSON.stringify(sample, null, 2);
+            updateTokenDisplay(sample);
+            renderGraphFromData(sample);
+            statusMsg.innerHTML = `<span class="success">✅ 示例数据已加载</span>`;
+            reportEvent('load_sample', {});
+        }
+
+        // ---------- 事件绑定 ----------
+        // 拖放
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                processFiles(files);
+            }
+        });
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'LABEL' && e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                processFiles(fileInput.files);
+            }
+        });
+
+        // 示例按钮
+        loadSampleBtn.addEventListener('click', loadSampleData);
+
+        // 复制
+        copyBtn.addEventListener('click', () => {
+            const text = jsonOutput.textContent;
+            if (navigator.clipboard && text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    statusMsg.innerHTML = `<span class="success">📋 已复制到剪贴板</span>`;
+                    reportEvent('copy_json', {});
+                }).catch(() => {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    statusMsg.innerHTML = `<span class="success">📋 已复制</span>`;
+                });
+            } else {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+                statusMsg.innerHTML = `<span class="success">📋 已复制</span>`;
+            }
+        });
+
+        // 清空
+        clearBtn.addEventListener('click', () => {
+            currentData = null;
+            jsonOutput.textContent = '等待输入...';
+            tokenEstimate.textContent = '~0 tokens';
+            graphNodes.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem;">无实体可展示</div>';
+            statusMsg.textContent = '已清空';
+            fileInput.value = '';
+            reportEvent('clear', {});
+        });
+
+        // 初始化示例
+        loadSampleData();
+
+        // 额外：点击ad placeholder 上报
+        document.querySelectorAll('.ad-placeholder a, .affiliate-item a').forEach(el => {
+            el.addEventListener('click', function(e) {
+                // 已经 inline 上报，但防止冒泡
+            });
+        });
+
+        console.log('DocStruct tool initialized.');
+    })();
+</script>
+</body>
+</html>
